@@ -1,0 +1,42 @@
+node_modules
+dist
+.astro
+.git
+.github
+.DS_Store
+
+# IDE & AI
+.idea
+.claude
+.ai
+.junie
+.playwright-mcp
+CLAUDE.md
+
+# Test files
+tests
+**/*.test.ts
+**/*.test.tsx
+playwright-report
+test-results
+vitest.config.ts
+playwright.config.ts
+coverage
+
+# Documentation
+README.md
+
+# Config files not needed at runtime
+tsconfig.json
+.prettierrc
+.prettierignore
+
+# Logs
+npm-debug.log
+yarn-error.log
+pnpm-debug.log
+*.log
+
+# Environment files
+.env
+.env.*
