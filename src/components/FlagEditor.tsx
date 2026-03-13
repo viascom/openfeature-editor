@@ -17,6 +17,7 @@ import {
   type FlagType,
   type TargetingRule,
 } from "../types/flags";
+import CustomSelect from "./CustomSelect";
 import SortableTargetingRule from "./SortableTargetingRule";
 
 interface Props {
@@ -68,7 +69,7 @@ export default function FlagEditor({
             type="text"
             value={flag.id}
             onChange={(e) => onUpdateFlag({ ...flag, id: e.target.value })}
-            className="w-full rounded bg-gray-800 px-3 py-2 text-sm text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="w-full rounded bg-gray-800 px-3 py-2 text-sm text-gray-100"
           />
         </div>
         <div className="col-span-2">
@@ -81,23 +82,17 @@ export default function FlagEditor({
             onChange={(e) =>
               onUpdateFlag({ ...flag, description: e.target.value || null })
             }
-            className="w-full rounded bg-gray-800 px-3 py-2 text-sm text-gray-100 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="w-full rounded bg-gray-800 px-3 py-2 text-sm text-gray-100 placeholder-gray-400"
           />
         </div>
         <div className="min-w-0">
-          <label htmlFor={`${uid}-type`} className="mb-1 block text-xs text-gray-400">Type</label>
-          <select
-            id={`${uid}-type`}
+          <label id={`${uid}-type-label`} className="mb-1 block text-xs text-gray-400">Type</label>
+          <CustomSelect
             value={flag.flagType}
-            onChange={(e) => onUpdateFlag({ ...flag, flagType: e.target.value as FlagType })}
-            className="w-full rounded bg-gray-800 px-3 py-2 text-sm text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-          >
-            {FLAG_TYPES.map((t) => (
-              <option key={t} value={t}>
-                {t}
-              </option>
-            ))}
-          </select>
+            options={FLAG_TYPES.map((t) => ({ value: t, label: t }))}
+            onChange={(val) => onUpdateFlag({ ...flag, flagType: val })}
+            ariaLabel="Type"
+          />
         </div>
         <div className="min-w-0">
           <label htmlFor={`${uid}-default-value`} className="mb-1 block text-xs text-gray-400">Default Value</label>
@@ -106,18 +101,32 @@ export default function FlagEditor({
             type="text"
             value={flag.defaultValue}
             onChange={(e) => onUpdateFlag({ ...flag, defaultValue: e.target.value })}
-            className="w-full rounded bg-gray-800 px-3 py-2 text-sm text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="w-full rounded bg-gray-800 px-3 py-2 text-sm text-gray-100"
           />
         </div>
       </div>
 
-      <label className="flex items-center gap-2 text-sm text-gray-300">
-        <input
-          type="checkbox"
-          checked={flag.enabled}
-          onChange={(e) => onUpdateFlag({ ...flag, enabled: e.target.checked })}
-          className="rounded accent-blue-500"
-        />
+      <label className="flex cursor-pointer items-center gap-2.5 text-sm text-gray-300 select-none">
+        <span className="relative inline-flex items-center justify-center">
+          <input
+            type="checkbox"
+            checked={flag.enabled}
+            onChange={(e) => onUpdateFlag({ ...flag, enabled: e.target.checked })}
+            className="peer sr-only"
+          />
+          <span className="h-4 w-4 rounded-[3px] border border-gray-600 bg-gray-800 transition-colors peer-checked:border-emerald-600 peer-checked:bg-emerald-600 peer-focus-visible:ring-2 peer-focus-visible:ring-emerald-500 peer-focus-visible:ring-offset-1 peer-focus-visible:ring-offset-gray-950" />
+          <svg
+            className="pointer-events-none absolute h-3 w-3 text-white opacity-0 transition-opacity peer-checked:opacity-100"
+            viewBox="0 0 12 12"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <polyline points="2.5 6 5 8.5 9.5 3.5" />
+          </svg>
+        </span>
         Enabled
       </label>
 
@@ -126,7 +135,7 @@ export default function FlagEditor({
           <h3 className="text-sm font-medium text-gray-300">Targeting Rules</h3>
           <button
             onClick={onAddRule}
-            className="rounded bg-blue-600 px-3 py-1 text-sm text-white hover:bg-blue-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="rounded bg-emerald-700 px-3 py-1 text-sm text-white hover:bg-emerald-600"
           >
             + Add Rule
           </button>

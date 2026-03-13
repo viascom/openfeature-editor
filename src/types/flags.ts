@@ -18,6 +18,22 @@ export const OPERATORS = [
 ] as const;
 export type Operator = (typeof OPERATORS)[number];
 
+export const OPERATOR_LABELS: Record<Operator, string> = {
+  IN: "in",
+  NOT_IN: "not in",
+  EQUALS: "equals",
+  NOT_EQUALS: "not equals",
+  CONTAINS: "contains",
+  STARTS_WITH: "starts with",
+  GREATER_THAN: ">",
+  GREATER_THAN_OR_EQUAL: ">=",
+  LESS_THAN: "<",
+  LESS_THAN_OR_EQUAL: "<=",
+  IS_NULL: "is null",
+  IS_ONE_OF: "is one of",
+  IS_NOT_ONE_OF: "is not one of",
+};
+
 export interface Condition {
   attribute: string;
   operator: Operator;

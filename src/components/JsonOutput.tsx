@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { FeatureFlag, FlagType, TargetingRule } from "../types/flags";
 import { FLAG_TYPES } from "../types/flags";
 
@@ -239,6 +239,9 @@ export default function JsonOutput({ flags, onImport }: Props) {
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [format, setFormat] = useState<OutputFormat>("json");
+  const [showImport, setShowImport] = useState(false);
+  const dialogRef = useRef<HTMLDialogElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const output = useMemo(() => generateOutput(flags, format), [flags, format]);
 
@@ -252,16 +255,36 @@ export default function JsonOutput({ flags, onImport }: Props) {
     }
   };
 
+  const openModal = useCallback(() => {
+    setShowImport(true);
+  }, []);
+
+  const closeModal = useCallback(() => {
+    setShowImport(false);
+    setImportText("");
+    setError(null);
+  }, []);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+    if (!dialog) return;
+    if (showImport) {
+      dialog.showModal();
+      textareaRef.current?.focus();
+    } else {
+      dialog.close();
+    }
+  }, [showImport]);
+
   const handleImport = () => {
     try {
-      const flags = detectAndParse(importText);
-      if (flags.length === 0) {
+      const parsed = detectAndParse(importText);
+      if (parsed.length === 0) {
         setError("No flags found in input");
         return;
       }
-      onImport(flags);
-      setImportText("");
-      setError(null);
+      onImport(parsed);
+      closeModal();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to parse input");
     }
@@ -277,9 +300,9 @@ export default function JsonOutput({ flags, onImport }: Props) {
               <button
                 key={f}
                 onClick={() => setFormat(f)}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
                   format === f
-                    ? "bg-blue-600 text-white"
+                    ? "bg-emerald-700 text-white"
                     : "text-gray-400 hover:bg-gray-700/50 hover:text-gray-200"
                 }`}
               >
@@ -289,9 +312,15 @@ export default function JsonOutput({ flags, onImport }: Props) {
           </div>
           <button
             onClick={handleCopy}
-            className="rounded bg-gray-700 px-3 py-1 text-sm text-gray-200 hover:bg-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+            className="rounded bg-gray-700 px-3 py-1 text-sm text-gray-200 hover:bg-gray-600"
           >
             {copied ? "Copied!" : "Copy"}
+          </button>
+          <button
+            onClick={openModal}
+            className="rounded bg-gray-700 px-3 py-1 text-sm text-gray-200 hover:bg-gray-600"
+          >
+            Import
           </button>
         </div>
       </div>
@@ -299,28 +328,56 @@ export default function JsonOutput({ flags, onImport }: Props) {
         readOnly
         value={output}
         aria-label="Generated output"
-        className="mb-4 min-h-[200px] flex-1 resize-none rounded-lg bg-gray-900 p-3 font-mono text-sm text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="min-h-[200px] flex-1 resize-none rounded-lg bg-gray-900 p-3 font-mono text-sm text-gray-300"
       />
 
-      <h2 className="mb-2 text-sm font-semibold text-gray-300">Import</h2>
-      <textarea
-        value={importText}
-        onChange={(e) => {
-          setImportText(e.target.value);
-          setError(null);
-        }}
-        placeholder="Paste JSON, SQL INSERT, or CSV here..."
-        aria-label="Import data"
-        className="mb-2 min-h-[100px] resize-none rounded-lg bg-gray-900 p-3 font-mono text-sm text-gray-300 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-      />
-      {error && <p className="mb-2 rounded bg-red-400/10 px-3 py-2 text-sm text-red-400">{error}</p>}
-      <button
-        onClick={handleImport}
-        disabled={!importText.trim()}
-        className="self-start rounded bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      <dialog
+        ref={dialogRef}
+        onClose={closeModal}
+        className="m-auto w-full max-w-2xl rounded-xl border border-gray-700 bg-gray-900 p-0 text-gray-100 shadow-2xl backdrop:bg-black/60"
       >
-        Import
-      </button>
+        <div className="flex flex-col gap-4 p-6">
+          <div className="flex items-center justify-between">
+            <h2 className="text-base font-semibold text-gray-100">Import Flags</h2>
+            <button
+              onClick={closeModal}
+              className="rounded p-1 text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+              aria-label="Close import dialog"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M4 4l8 8M12 4l-8 8" />
+              </svg>
+            </button>
+          </div>
+          <textarea
+            ref={textareaRef}
+            value={importText}
+            onChange={(e) => {
+              setImportText(e.target.value);
+              setError(null);
+            }}
+            placeholder="Paste JSON, SQL INSERT, or CSV here..."
+            aria-label="Import data"
+            className="min-h-[200px] resize-none rounded-lg bg-gray-800 p-3 font-mono text-sm text-gray-300 placeholder-gray-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          />
+          {error && <p className="rounded bg-red-400/10 px-3 py-2 text-sm text-red-400" style={{ animation: "fade-in-subtle 150ms ease-out" }}>{error}</p>}
+          <div className="flex items-center justify-end gap-2">
+            <button
+              onClick={closeModal}
+              className="rounded px-3 py-1.5 text-sm text-gray-400 hover:bg-gray-800 hover:text-gray-200"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleImport}
+              disabled={!importText.trim()}
+              className="rounded bg-emerald-700 px-4 py-1.5 text-sm text-white hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              Import
+            </button>
+          </div>
+        </div>
+      </dialog>
     </div>
   );
 }

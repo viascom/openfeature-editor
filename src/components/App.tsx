@@ -10,6 +10,7 @@ import {
 import FlagEditor from "./FlagEditor";
 import FlagList from "./FlagList";
 import JsonOutput from "./JsonOutput";
+import ResizablePanels from "./ResizablePanels";
 
 type Action =
   | { type: "SET_FLAGS"; flags: FeatureFlag[] }
@@ -120,10 +121,17 @@ export default function App() {
     setSelectedFlagIndex(flags.length);
   };
 
-  return (
-    <main className="flex h-dvh">
-      <section className="w-1/2 min-w-0 overflow-y-auto border-r border-gray-800 p-4" aria-label="Flag editor">
-        <h1 className="mb-4 text-lg font-bold text-gray-100">OpenFeature Config Editor</h1>
+  const leftPanel = (
+    <div className="flex h-full flex-col">
+      <h1 className="flex shrink-0 items-center gap-2.5 px-6 pt-6 pb-4 text-2xl font-semibold tracking-tight text-gray-100">
+        <svg className="h-7 w-7 shrink-0" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <rect x="2" y="9" width="28" height="14" rx="7" fill="#059669"/>
+          <circle cx="23" cy="16" r="5" fill="#fff"/>
+          <path d="M10 9 L14 16 L10 23" stroke="#065f46" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" opacity="0.5"/>
+        </svg>
+        OpenFeature Config Editor
+      </h1>
+      <div className="shrink-0 px-6">
         <FlagList
           flags={flags}
           selectedIndex={selectedFlagIndex}
@@ -131,8 +139,10 @@ export default function App() {
           onAdd={handleAddFlag}
           onRemove={handleRemoveFlag}
         />
-        {selectedFlag && selectedFlagIndex !== null && (
-          <div className="mt-4 rounded-lg border border-gray-800 bg-gray-900/50 p-4">
+      </div>
+      {selectedFlag && selectedFlagIndex !== null && (
+        <div className="min-h-0 flex-1 overflow-y-auto px-6 pb-6" style={{ animation: "fade-in 200ms cubic-bezier(0.25,1,0.5,1)" }} key={selectedFlagIndex}>
+          <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5">
             <FlagEditor
               flag={selectedFlag}
               onUpdateFlag={(f) =>
@@ -180,17 +190,29 @@ export default function App() {
               }
             />
           </div>
-        )}
-      </section>
-      <aside className="w-1/2 min-w-0 overflow-y-auto p-4" aria-label="Output and import">
-        <JsonOutput
-          flags={flags}
-          onImport={(imported) => {
-            dispatch({ type: "SET_FLAGS", flags: imported });
-            setSelectedFlagIndex(null);
-          }}
-        />
-      </aside>
-    </main>
+        </div>
+      )}
+    </div>
+  );
+
+  const rightPanel = (
+    <div className="h-full overflow-y-auto p-6">
+      <JsonOutput
+        flags={flags}
+        onImport={(imported) => {
+          dispatch({ type: "SET_FLAGS", flags: imported });
+          setSelectedFlagIndex(null);
+        }}
+      />
+    </div>
+  );
+
+  return (
+    <ResizablePanels
+      left={leftPanel}
+      right={rightPanel}
+      leftLabel="Flag editor"
+      rightLabel="Output and import"
+    />
   );
 }

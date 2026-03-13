@@ -1,8 +1,80 @@
 @import "tailwindcss";
 
+@theme {
+  --font-sans: 'Space Grotesk', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Tinted neutrals — subtle cool-indigo undertone */
+  --color-gray-50: oklch(0.98 0.003 265);
+  --color-gray-100: oklch(0.93 0.004 265);
+  --color-gray-200: oklch(0.82 0.006 265);
+  --color-gray-300: oklch(0.71 0.008 265);
+  --color-gray-400: oklch(0.60 0.010 265);
+  --color-gray-500: oklch(0.48 0.012 265);
+  --color-gray-600: oklch(0.38 0.014 265);
+  --color-gray-700: oklch(0.29 0.014 265);
+  --color-gray-800: oklch(0.22 0.014 265);
+  --color-gray-900: oklch(0.17 0.016 265);
+  --color-gray-950: oklch(0.13 0.02 265);
+}
+
 @layer base {
   button,
-  select {
-    @apply transition-colors;
+  select,
+  input:not([type="checkbox"]):not([type="radio"]),
+  textarea {
+    @apply transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500;
+  }
+
+  /* Webkit (Chrome, Edge, Safari) */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: oklch(0.29 0.014 265);
+    border-radius: 3px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: oklch(0.38 0.014 265);
+  }
+
+  /* Firefox */
+  * { scrollbar-width: thin; scrollbar-color: oklch(0.29 0.014 265) transparent; }
+
+  /* Dialog animations */
+  dialog[open] {
+    animation: dialog-in 200ms cubic-bezier(0.25, 1, 0.5, 1);
+  }
+  dialog[open]::backdrop {
+    animation: backdrop-in 200ms ease-out;
+  }
+
+  /* Active press feedback for interactive buttons */
+  button:active:not(:disabled) {
+    transform: scale(0.97);
+  }
+}
+
+@keyframes dialog-in {
+  from { opacity: 0; transform: scale(0.96) translateY(6px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+@keyframes backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in-subtle {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
