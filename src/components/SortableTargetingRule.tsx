@@ -1,11 +1,12 @@
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import type { Condition, TargetingRule } from "../types/flags";
+import type { Condition, FlagType, TargetingRule } from "../types/flags";
 import TargetingRuleEditor from "./TargetingRuleEditor";
 
 interface Props {
   rule: TargetingRule;
   ruleIndex: number;
+  flagType: FlagType;
   onUpdateRule: (rule: TargetingRule) => void;
   onRemoveRule: () => void;
   onAddCondition: () => void;

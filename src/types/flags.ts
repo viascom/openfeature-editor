@@ -87,3 +87,16 @@ export function createCondition(): Condition {
     values: [],
   };
 }
+
+export function validateValue(value: string, flagType: FlagType): string | null {
+  switch (flagType) {
+    case "BOOLEAN":
+      return value === "true" || value === "false" ? null : "Must be true or false";
+    case "INTEGER":
+      return /^-?\d+$/.test(value) ? null : "Must be an integer";
+    case "DOUBLE":
+      return /^-?(\d+\.?\d*|\.\d+)$/.test(value) ? null : "Must be a number";
+    default:
+      return null;
+  }
+}

@@ -16,12 +16,14 @@ import {
   type FeatureFlag,
   type FlagType,
   type TargetingRule,
+  validateValue,
 } from "../types/flags";
 import CustomSelect from "./CustomSelect";
 import SortableTargetingRule from "./SortableTargetingRule";
 
 interface Props {
   flag: FeatureFlag;
+  duplicateId: boolean;
   onUpdateFlag: (flag: FeatureFlag) => void;
   onAddRule: () => void;
   onReorderRules: (fromIndex: number, toIndex: number) => void;
@@ -34,6 +36,7 @@ interface Props {
 
 export default function FlagEditor({
   flag,
+  duplicateId,
   onUpdateFlag,
   onAddRule,
   onReorderRules,
@@ -48,6 +51,8 @@ export default function FlagEditor({
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   );
+
+  const defaultValueError = validateValue(flag.defaultValue, flag.flagType);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -69,8 +74,9 @@ export default function FlagEditor({
             type="text"
             value={flag.id}
             onChange={(e) => onUpdateFlag({ ...flag, id: e.target.value })}
-            className="w-full rounded bg-gray-800 px-3 py-2 text-sm text-gray-100"
+            className={`w-full rounded bg-gray-800 px-3 py-2 text-sm text-gray-100 ${duplicateId ? "ring-2 ring-red-500" : ""}`}
           />
+          {duplicateId && <p className="mt-1 text-xs text-red-400">A flag with this ID already exists</p>}
         </div>
         <div className="col-span-2">
           <label htmlFor={`${uid}-description`} className="mb-1 block text-xs text-gray-400">Description</label>
@@ -90,19 +96,42 @@ export default function FlagEditor({
           <CustomSelect
             value={flag.flagType}
             options={FLAG_TYPES.map((t) => ({ value: t, label: t }))}
-            onChange={(val) => onUpdateFlag({ ...flag, flagType: val })}
+            onChange={(val) => {
+              const defaults: Record<FlagType, string> = { BOOLEAN: "false", STRING: "", INTEGER: "0", DOUBLE: "0.0" };
+              const newDefault = val === "BOOLEAN" || validateValue(flag.defaultValue, val) ? defaults[val] : flag.defaultValue;
+              const newRules = flag.targetingRules.map((r) => {
+                if (val === "BOOLEAN" || validateValue(r.value, val)) {
+                  return { ...r, value: defaults[val] };
+                }
+                return r;
+              });
+              onUpdateFlag({ ...flag, flagType: val, defaultValue: newDefault, targetingRules: newRules });
+            }}
             ariaLabel="Type"
           />
         </div>
         <div className="min-w-0">
           <label htmlFor={`${uid}-default-value`} className="mb-1 block text-xs text-gray-400">Default Value</label>
-          <input
-            id={`${uid}-default-value`}
-            type="text"
-            value={flag.defaultValue}
-            onChange={(e) => onUpdateFlag({ ...flag, defaultValue: e.target.value })}
-            className="w-full rounded bg-gray-800 px-3 py-2 text-sm text-gray-100"
-          />
+          {flag.flagType === "BOOLEAN" ? (
+            <CustomSelect
+              id={`${uid}-default-value`}
+              value={flag.defaultValue === "true" ? "true" : "false"}
+              options={[{ value: "true", label: "true" }, { value: "false", label: "false" }]}
+              onChange={(val) => onUpdateFlag({ ...flag, defaultValue: val })}
+              ariaLabel="Default value"
+            />
+          ) : (
+            <>
+              <input
+                id={`${uid}-default-value`}
+                type="text"
+                value={flag.defaultValue}
+                onChange={(e) => onUpdateFlag({ ...flag, defaultValue: e.target.value })}
+                className={`w-full rounded bg-gray-800 px-3 py-2 text-sm text-gray-100 ${defaultValueError ? "ring-2 ring-red-500" : ""}`}
+              />
+              {defaultValueError && <p className="mt-1 text-xs text-red-400">{defaultValueError}</p>}
+            </>
+          )}
         </div>
       </div>
 
@@ -158,6 +187,7 @@ export default function FlagEditor({
                 key={rule.id}
                 rule={rule}
                 ruleIndex={ri}
+                flagType={flag.flagType}
                 onUpdateRule={(r) => onUpdateRule(ri, r)}
                 onRemoveRule={() => onRemoveRule(ri)}
                 onAddCondition={() => onAddCondition(ri)}

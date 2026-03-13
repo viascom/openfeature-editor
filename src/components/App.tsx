@@ -1,4 +1,4 @@
-import { useReducer, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import {
   createCondition,
   createFlag,
@@ -101,9 +101,23 @@ function reducer(state: FeatureFlag[], action: Action): FeatureFlag[] {
   }
 }
 
+const STORAGE_KEY = "openfeature-editor:flags";
+
+function loadFlags(): FeatureFlag[] {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch { /* ignore corrupt data */ }
+  return [];
+}
+
 export default function App() {
-  const [flags, dispatch] = useReducer(reducer, []);
+  const [flags, dispatch] = useReducer(reducer, [], loadFlags);
   const [selectedFlagIndex, setSelectedFlagIndex] = useState<number | null>(null);
+
+  useEffect(() => {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(flags)); } catch { /* quota exceeded */ }
+  }, [flags]);
 
   const selectedFlag = selectedFlagIndex !== null ? flags[selectedFlagIndex] ?? null : null;
 
@@ -145,6 +159,7 @@ export default function App() {
           <div className="rounded-lg border border-gray-800 bg-gray-900/50 p-5">
             <FlagEditor
               flag={selectedFlag}
+              duplicateId={flags.some((f, i) => i !== selectedFlagIndex && f.id === selectedFlag.id)}
               onUpdateFlag={(f) =>
                 dispatch({ type: "UPDATE_FLAG", flagIndex: selectedFlagIndex, flag: f })
               }

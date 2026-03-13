@@ -1,11 +1,13 @@
 import { useId } from "react";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
-import { type Condition, type TargetingRule } from "../types/flags";
+import { type Condition, type FlagType, type TargetingRule, validateValue } from "../types/flags";
 import ConditionEditor from "./ConditionEditor";
+import CustomSelect from "./CustomSelect";
 
 interface Props {
   rule: TargetingRule;
   ruleIndex: number;
+  flagType: FlagType;
   onUpdateRule: (rule: TargetingRule) => void;
   onRemoveRule: () => void;
   onAddCondition: () => void;
@@ -17,6 +19,7 @@ interface Props {
 export default function TargetingRuleEditor({
   rule,
   ruleIndex,
+  flagType,
   onUpdateRule,
   onRemoveRule,
   onAddCondition,
@@ -26,6 +29,7 @@ export default function TargetingRuleEditor({
 }: Props) {
   const uid = useId();
   const hasPercentage = rule.percentage !== null;
+  const valueError = rule.value ? validateValue(rule.value, flagType) : null;
 
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-900 p-4">
@@ -74,17 +78,31 @@ export default function TargetingRuleEditor({
         </div>
         <div className="min-w-0">
           <label htmlFor={`${uid}-value`} className="mb-1 block text-xs text-gray-400">Value</label>
-          <input
-            id={`${uid}-value`}
-            type="text"
-            value={rule.value}
-            onChange={(e) => onUpdateRule({ ...rule, value: e.target.value })}
-            className="w-full rounded bg-gray-800 px-2 py-1.5 text-sm text-gray-100"
-          />
+          {flagType === "BOOLEAN" ? (
+            <CustomSelect
+              id={`${uid}-value`}
+              value={rule.value === "true" ? "true" : "false"}
+              options={[{ value: "true", label: "true" }, { value: "false", label: "false" }]}
+              onChange={(val) => onUpdateRule({ ...rule, value: val })}
+              ariaLabel="Rule value"
+              variant="compact"
+            />
+          ) : (
+            <>
+              <input
+                id={`${uid}-value`}
+                type="text"
+                value={rule.value}
+                onChange={(e) => onUpdateRule({ ...rule, value: e.target.value })}
+                className={`w-full rounded bg-gray-800 px-2 py-1.5 text-sm text-gray-100 ${valueError ? "ring-2 ring-red-500" : ""}`}
+              />
+              {valueError && <p className="mt-1 text-xs text-red-400">{valueError}</p>}
+            </>
+          )}
         </div>
       </div>
 
-      <div className="mb-3 flex flex-wrap items-center gap-3">
+      <div className="mb-3 flex flex-col gap-2">
         <label className="flex cursor-pointer items-center gap-2.5 text-sm text-gray-300 select-none">
           <span className="relative inline-flex items-center justify-center">
             <input
@@ -115,7 +133,21 @@ export default function TargetingRuleEditor({
           Percentage Rollout
         </label>
         {hasPercentage && (
-          <>
+          <div className="flex items-center gap-3">
+            <label className="sr-only" htmlFor={`${uid}-percentage-range`}>Percentage slider</label>
+            <input
+              id={`${uid}-percentage-range`}
+              type="range"
+              min={0}
+              max={100}
+              step={1}
+              value={rule.percentage ?? 100}
+              onChange={(e) =>
+                onUpdateRule({ ...rule, percentage: Number(e.target.value) })
+              }
+              className="range-slider flex-1"
+              style={{ "--pct": `${rule.percentage ?? 100}%` } as React.CSSProperties}
+            />
             <label className="sr-only" htmlFor={`${uid}-percentage`}>Percentage</label>
             <input
               id={`${uid}-percentage`}
@@ -129,7 +161,7 @@ export default function TargetingRuleEditor({
               className="w-20 rounded bg-gray-800 px-2 py-1.5 text-sm text-gray-100"
             />
             <span className="text-sm text-gray-400" aria-hidden="true">%</span>
-            <label className="sr-only" htmlFor={`${uid}-seed`}>Percentage seed</label>
+            <label className="text-xs text-gray-400 whitespace-nowrap" htmlFor={`${uid}-seed`}>Seed:</label>
             <input
               id={`${uid}-seed`}
               type="text"
@@ -140,7 +172,7 @@ export default function TargetingRuleEditor({
               }
               className="w-36 rounded bg-gray-800 px-2 py-1.5 text-sm text-gray-100 placeholder-gray-400"
             />
-          </>
+          </div>
         )}
       </div>
 
