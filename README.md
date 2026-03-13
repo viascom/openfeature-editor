@@ -2,6 +2,8 @@
 
 A visual editor for creating and managing [OpenFeature](https://openfeature.dev/) feature flag configurations. Built with Astro, React, and Tailwind CSS.
 
+![Preview](preview.png)
+
 ## Features
 
 - Create, edit, and remove feature flags (Boolean, String, Integer, Double)
