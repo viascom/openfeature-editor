@@ -1,5 +1,6 @@
+import { useId } from "react";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
-import { createCondition, type Condition, type TargetingRule } from "../types/flags";
+import { type Condition, type TargetingRule } from "../types/flags";
 import ConditionEditor from "./ConditionEditor";
 
 interface Props {
@@ -23,6 +24,7 @@ export default function TargetingRuleEditor({
   onRemoveCondition,
   dragListeners,
 }: Props) {
+  const uid = useId();
   const hasPercentage = rule.percentage !== null;
 
   return (
@@ -32,10 +34,11 @@ export default function TargetingRuleEditor({
           {dragListeners && (
             <button
               type="button"
-              className="cursor-grab touch-none rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-gray-300 active:cursor-grabbing"
+              className="cursor-grab touch-none rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-gray-300 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+              aria-label={`Reorder rule ${ruleIndex + 1}`}
               {...dragListeners}
             >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
                 <circle cx="5.5" cy="2.5" r="1.5" />
                 <circle cx="10.5" cy="2.5" r="1.5" />
                 <circle cx="5.5" cy="7.5" r="1.5" />
@@ -49,37 +52,39 @@ export default function TargetingRuleEditor({
         </div>
         <button
           onClick={onRemoveRule}
-          className="rounded px-2 py-1 text-sm text-red-400 hover:bg-red-400/10"
+          className="rounded px-2 py-1 text-sm text-red-400 hover:bg-red-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
         >
           Remove Rule
         </button>
       </div>
 
       <div className="mb-3 grid grid-cols-2 gap-3">
-        <div>
-          <label className="mb-1 block text-xs text-gray-400">Description</label>
+        <div className="min-w-0">
+          <label htmlFor={`${uid}-description`} className="mb-1 block text-xs text-gray-400">Description</label>
           <input
+            id={`${uid}-description`}
             type="text"
             placeholder="Optional"
             value={rule.description ?? ""}
             onChange={(e) =>
               onUpdateRule({ ...rule, description: e.target.value || null })
             }
-            className="w-full rounded bg-gray-800 px-2 py-1.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded bg-gray-800 px-2 py-1.5 text-sm text-gray-100 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           />
         </div>
-        <div>
-          <label className="mb-1 block text-xs text-gray-400">Value</label>
+        <div className="min-w-0">
+          <label htmlFor={`${uid}-value`} className="mb-1 block text-xs text-gray-400">Value</label>
           <input
+            id={`${uid}-value`}
             type="text"
             value={rule.value}
             onChange={(e) => onUpdateRule({ ...rule, value: e.target.value })}
-            className="w-full rounded bg-gray-800 px-2 py-1.5 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+            className="w-full rounded bg-gray-800 px-2 py-1.5 text-sm text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           />
         </div>
       </div>
 
-      <div className="mb-3 flex items-center gap-3">
+      <div className="mb-3 flex flex-wrap items-center gap-3">
         <label className="flex items-center gap-2 text-sm text-gray-300">
           <input
             type="checkbox"
@@ -97,7 +102,9 @@ export default function TargetingRuleEditor({
         </label>
         {hasPercentage && (
           <>
+            <label className="sr-only" htmlFor={`${uid}-percentage`}>Percentage</label>
             <input
+              id={`${uid}-percentage`}
               type="number"
               min={0}
               max={100}
@@ -105,17 +112,19 @@ export default function TargetingRuleEditor({
               onChange={(e) =>
                 onUpdateRule({ ...rule, percentage: Number(e.target.value) })
               }
-              className="w-20 rounded bg-gray-800 px-2 py-1.5 text-sm text-gray-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-20 rounded bg-gray-800 px-2 py-1.5 text-sm text-gray-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             />
-            <span className="text-sm text-gray-400">%</span>
+            <span className="text-sm text-gray-400" aria-hidden="true">%</span>
+            <label className="sr-only" htmlFor={`${uid}-seed`}>Percentage seed</label>
             <input
+              id={`${uid}-seed`}
               type="text"
-              placeholder="percentageSeed"
+              placeholder="e.g. userId"
               value={rule.percentageSeed ?? "userId"}
               onChange={(e) =>
                 onUpdateRule({ ...rule, percentageSeed: e.target.value || null })
               }
-              className="w-36 rounded bg-gray-800 px-2 py-1.5 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-36 rounded bg-gray-800 px-2 py-1.5 text-sm text-gray-100 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             />
           </>
         )}
@@ -128,7 +137,7 @@ export default function TargetingRuleEditor({
           </span>
           <button
             onClick={onAddCondition}
-            className="rounded px-2 py-1 text-xs text-blue-400 hover:bg-blue-400/10"
+            className="rounded px-2 py-1 text-xs text-blue-400 hover:bg-blue-400/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             + Add Condition
           </button>

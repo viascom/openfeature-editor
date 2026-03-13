@@ -121,8 +121,8 @@ export default function App() {
   };
 
   return (
-    <div className="flex h-screen">
-      <div className="w-1/2 overflow-y-auto border-r border-gray-800 p-4">
+    <main className="flex h-dvh">
+      <section className="w-1/2 min-w-0 overflow-y-auto border-r border-gray-800 p-4" aria-label="Flag editor">
         <h1 className="mb-4 text-lg font-bold text-gray-100">OpenFeature Config Editor</h1>
         <FlagList
           flags={flags}
@@ -181,8 +181,8 @@ export default function App() {
             />
           </div>
         )}
-      </div>
-      <div className="w-1/2 overflow-y-auto p-4">
+      </section>
+      <aside className="w-1/2 min-w-0 overflow-y-auto p-4" aria-label="Output and import">
         <JsonOutput
           flags={flags}
           onImport={(imported) => {
@@ -190,7 +190,7 @@ export default function App() {
             setSelectedFlagIndex(null);
           }}
         />
-      </div>
-    </div>
+      </aside>
+    </main>
   );
 }

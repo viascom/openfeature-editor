@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { FeatureFlag, FlagType, TargetingRule } from "../types/flags";
 import { FLAG_TYPES } from "../types/flags";
 
@@ -240,12 +240,16 @@ export default function JsonOutput({ flags, onImport }: Props) {
   const [copied, setCopied] = useState(false);
   const [format, setFormat] = useState<OutputFormat>("json");
 
-  const output = generateOutput(flags, format);
+  const output = useMemo(() => generateOutput(flags, format), [flags, format]);
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(output);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
+    try {
+      await navigator.clipboard.writeText(output);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard API may be unavailable in insecure contexts
+    }
   };
 
   const handleImport = () => {
@@ -273,10 +277,10 @@ export default function JsonOutput({ flags, onImport }: Props) {
               <button
                 key={f}
                 onClick={() => setFormat(f)}
-                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                className={`rounded-md px-3 py-1 text-xs font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
                   format === f
                     ? "bg-blue-600 text-white"
-                    : "text-gray-400 hover:text-gray-200"
+                    : "text-gray-400 hover:bg-gray-700/50 hover:text-gray-200"
                 }`}
               >
                 {FORMAT_LABELS[f]}
@@ -285,7 +289,7 @@ export default function JsonOutput({ flags, onImport }: Props) {
           </div>
           <button
             onClick={handleCopy}
-            className="rounded bg-gray-700 px-3 py-1 text-sm text-gray-200 hover:bg-gray-600"
+            className="rounded bg-gray-700 px-3 py-1 text-sm text-gray-200 hover:bg-gray-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             {copied ? "Copied!" : "Copy"}
           </button>
@@ -294,7 +298,8 @@ export default function JsonOutput({ flags, onImport }: Props) {
       <textarea
         readOnly
         value={output}
-        className="mb-4 min-h-[200px] flex-1 resize-none rounded-lg bg-gray-900 p-3 font-mono text-sm text-gray-300 focus:outline-none"
+        aria-label="Generated output"
+        className="mb-4 min-h-[200px] flex-1 resize-none rounded-lg bg-gray-900 p-3 font-mono text-sm text-gray-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       />
 
       <h2 className="mb-2 text-sm font-semibold text-gray-300">Import</h2>
@@ -305,13 +310,14 @@ export default function JsonOutput({ flags, onImport }: Props) {
           setError(null);
         }}
         placeholder="Paste JSON, SQL INSERT, or CSV here..."
-        className="mb-2 min-h-[100px] resize-none rounded-lg bg-gray-900 p-3 font-mono text-sm text-gray-300 placeholder-gray-600 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        aria-label="Import data"
+        className="mb-2 min-h-[100px] resize-none rounded-lg bg-gray-900 p-3 font-mono text-sm text-gray-300 placeholder-gray-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       />
-      {error && <p className="mb-2 text-sm text-red-400">{error}</p>}
+      {error && <p className="mb-2 rounded bg-red-400/10 px-3 py-2 text-sm text-red-400">{error}</p>}
       <button
         onClick={handleImport}
         disabled={!importText.trim()}
-        className="self-start rounded bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-500 disabled:opacity-40"
+        className="self-start rounded bg-blue-600 px-4 py-1.5 text-sm text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       >
         Import
       </button>
