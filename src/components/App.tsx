@@ -17,6 +17,7 @@ type Action =
   | { type: "REMOVE_FLAG"; flagIndex: number }
   | { type: "UPDATE_FLAG"; flagIndex: number; flag: FeatureFlag }
   | { type: "ADD_RULE"; flagIndex: number }
+  | { type: "REORDER_RULES"; flagIndex: number; fromIndex: number; toIndex: number }
   | { type: "REMOVE_RULE"; flagIndex: number; ruleIndex: number }
   | { type: "UPDATE_RULE"; flagIndex: number; ruleIndex: number; rule: TargetingRule }
   | { type: "ADD_CONDITION"; flagIndex: number; ruleIndex: number }
@@ -55,6 +56,13 @@ function reducer(state: FeatureFlag[], action: Action): FeatureFlag[] {
         ...f,
         targetingRules: [...f.targetingRules, createRule()],
       }));
+    case "REORDER_RULES":
+      return updateFlag(state, action.flagIndex, (f) => {
+        const rules = [...f.targetingRules];
+        const [moved] = rules.splice(action.fromIndex, 1);
+        rules.splice(action.toIndex, 0, moved);
+        return { ...f, targetingRules: rules };
+      });
     case "REMOVE_RULE":
       return updateFlag(state, action.flagIndex, (f) => ({
         ...f,
@@ -131,6 +139,14 @@ export default function App() {
                 dispatch({ type: "UPDATE_FLAG", flagIndex: selectedFlagIndex, flag: f })
               }
               onAddRule={() => dispatch({ type: "ADD_RULE", flagIndex: selectedFlagIndex })}
+              onReorderRules={(fromIndex, toIndex) =>
+                dispatch({
+                  type: "REORDER_RULES",
+                  flagIndex: selectedFlagIndex,
+                  fromIndex,
+                  toIndex,
+                })
+              }
               onRemoveRule={(ri) =>
                 dispatch({ type: "REMOVE_RULE", flagIndex: selectedFlagIndex, ruleIndex: ri })
               }

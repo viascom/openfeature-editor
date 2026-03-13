@@ -1,16 +1,28 @@
 import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { restrictToParentElement, restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import { SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import {
   FLAG_TYPES,
   type Condition,
   type FeatureFlag,
   type FlagType,
   type TargetingRule,
 } from "../types/flags";
-import TargetingRuleEditor from "./TargetingRuleEditor";
+import SortableTargetingRule from "./SortableTargetingRule";
 
 interface Props {
   flag: FeatureFlag;
   onUpdateFlag: (flag: FeatureFlag) => void;
   onAddRule: () => void;
+  onReorderRules: (fromIndex: number, toIndex: number) => void;
   onRemoveRule: (ruleIndex: number) => void;
   onUpdateRule: (ruleIndex: number, rule: TargetingRule) => void;
   onAddCondition: (ruleIndex: number) => void;
@@ -22,12 +34,28 @@ export default function FlagEditor({
   flag,
   onUpdateFlag,
   onAddRule,
+  onReorderRules,
   onRemoveRule,
   onUpdateRule,
   onAddCondition,
   onRemoveCondition,
   onUpdateCondition,
 }: Props) {
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = flag.targetingRules.findIndex((r) => r.id === active.id);
+    const newIndex = flag.targetingRules.findIndex((r) => r.id === over.id);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      onReorderRules(oldIndex, newIndex);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
@@ -100,18 +128,30 @@ export default function FlagEditor({
         {flag.targetingRules.length === 0 && (
           <p className="text-sm text-gray-500">No targeting rules. Flag will serve the default value.</p>
         )}
-        {flag.targetingRules.map((rule, ri) => (
-          <TargetingRuleEditor
-            key={ri}
-            rule={rule}
-            ruleIndex={ri}
-            onUpdateRule={(r) => onUpdateRule(ri, r)}
-            onRemoveRule={() => onRemoveRule(ri)}
-            onAddCondition={() => onAddCondition(ri)}
-            onUpdateCondition={(ci, c) => onUpdateCondition(ri, ci, c)}
-            onRemoveCondition={(ci) => onRemoveCondition(ri, ci)}
-          />
-        ))}
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          modifiers={[restrictToVerticalAxis, restrictToParentElement]}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={flag.targetingRules.map((r) => r.id)}
+            strategy={verticalListSortingStrategy}
+          >
+            {flag.targetingRules.map((rule, ri) => (
+              <SortableTargetingRule
+                key={rule.id}
+                rule={rule}
+                ruleIndex={ri}
+                onUpdateRule={(r) => onUpdateRule(ri, r)}
+                onRemoveRule={() => onRemoveRule(ri)}
+                onAddCondition={() => onAddCondition(ri)}
+                onUpdateCondition={(ci, c) => onUpdateCondition(ri, ci, c)}
+                onRemoveCondition={(ci) => onRemoveCondition(ri, ci)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
       </div>
     </div>
   );

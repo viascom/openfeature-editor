@@ -25,6 +25,7 @@ export interface Condition {
 }
 
 export interface TargetingRule {
+  id: string;
   description: string | null;
   conditions: Condition[];
   percentage: number | null;
@@ -54,6 +55,7 @@ export function createFlag(): FeatureFlag {
 
 export function createRule(): TargetingRule {
   return {
+    id: crypto.randomUUID(),
     description: null,
     conditions: [],
     percentage: null,

@@ -1,3 +1,4 @@
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { createCondition, type Condition, type TargetingRule } from "../types/flags";
 import ConditionEditor from "./ConditionEditor";
 
@@ -9,6 +10,7 @@ interface Props {
   onAddCondition: () => void;
   onUpdateCondition: (condIndex: number, condition: Condition) => void;
   onRemoveCondition: (condIndex: number) => void;
+  dragListeners?: SyntheticListenerMap;
 }
 
 export default function TargetingRuleEditor({
@@ -19,13 +21,32 @@ export default function TargetingRuleEditor({
   onAddCondition,
   onUpdateCondition,
   onRemoveCondition,
+  dragListeners,
 }: Props) {
   const hasPercentage = rule.percentage !== null;
 
   return (
     <div className="rounded-lg border border-gray-700 bg-gray-900 p-4">
       <div className="mb-3 flex items-center justify-between">
-        <h4 className="text-sm font-medium text-gray-300">Rule {ruleIndex + 1}</h4>
+        <div className="flex items-center gap-2">
+          {dragListeners && (
+            <button
+              type="button"
+              className="cursor-grab touch-none rounded p-1 text-gray-500 hover:bg-gray-800 hover:text-gray-300 active:cursor-grabbing"
+              {...dragListeners}
+            >
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                <circle cx="5.5" cy="2.5" r="1.5" />
+                <circle cx="10.5" cy="2.5" r="1.5" />
+                <circle cx="5.5" cy="7.5" r="1.5" />
+                <circle cx="10.5" cy="7.5" r="1.5" />
+                <circle cx="5.5" cy="12.5" r="1.5" />
+                <circle cx="10.5" cy="12.5" r="1.5" />
+              </svg>
+            </button>
+          )}
+          <h4 className="text-sm font-medium text-gray-300">Rule {ruleIndex + 1}</h4>
+        </div>
         <button
           onClick={onRemoveRule}
           className="rounded px-2 py-1 text-sm text-red-400 hover:bg-red-400/10"

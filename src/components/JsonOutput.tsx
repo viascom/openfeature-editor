@@ -8,13 +8,17 @@ function escSql(val: string): string {
   return val.replace(/'/g, "''");
 }
 
+function stripRuleIds(rules: TargetingRule[]): Omit<TargetingRule, "id">[] {
+  return rules.map(({ id: _id, ...rest }) => rest);
+}
+
 function flagToSqlInsert(flag: FeatureFlag): string {
   const id = escSql(flag.id);
   const description = flag.description ? `'${escSql(flag.description)}'` : "NULL";
   const flagType = escSql(flag.flagType);
   const defaultValue = escSql(flag.defaultValue);
   const enabled = flag.enabled ? "true" : "false";
-  const targetingRules = escSql(JSON.stringify(flag.targetingRules));
+  const targetingRules = escSql(JSON.stringify(stripRuleIds(flag.targetingRules)));
 
   return `INSERT INTO public.feature_flags (id, description, flag_type, default_value, enabled, targeting_rules)
 VALUES ('${id}', ${description}, '${flagType}', '${defaultValue}', ${enabled}, '${targetingRules}'::jsonb);`;
@@ -26,7 +30,7 @@ function flagToSqlUpdate(flag: FeatureFlag): string {
   const flagType = escSql(flag.flagType);
   const defaultValue = escSql(flag.defaultValue);
   const enabled = flag.enabled ? "true" : "false";
-  const targetingRules = escSql(JSON.stringify(flag.targetingRules));
+  const targetingRules = escSql(JSON.stringify(stripRuleIds(flag.targetingRules)));
 
   return `UPDATE public.feature_flags
 SET description = ${description},
@@ -41,7 +45,11 @@ WHERE id = '${id}';`;
 function generateOutput(flags: FeatureFlag[], format: OutputFormat): string {
   switch (format) {
     case "json":
-      return JSON.stringify(flags, null, 2);
+      return JSON.stringify(
+        flags.map((f) => ({ ...f, targetingRules: stripRuleIds(f.targetingRules) })),
+        null,
+        2,
+      );
     case "sql_insert":
       return flags.map(flagToSqlInsert).join("\n\n");
     case "sql_update":
@@ -94,6 +102,7 @@ function parseTargetingRules(raw: string): TargetingRule[] {
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
     return parsed.map((r: Record<string, unknown>) => ({
+      id: crypto.randomUUID(),
       description: (r.description as string) ?? null,
       conditions: Array.isArray(r.conditions) ? r.conditions : [],
       percentage: (r.percentage as number) ?? null,
@@ -194,8 +203,14 @@ function detectAndParse(text: string): FeatureFlag[] {
   // Try JSON first
   if (trimmed.startsWith("[") || trimmed.startsWith("{")) {
     const parsed = JSON.parse(trimmed);
-    const arr = Array.isArray(parsed) ? parsed : [parsed];
-    return arr;
+    const arr: FeatureFlag[] = Array.isArray(parsed) ? parsed : [parsed];
+    return arr.map((f) => ({
+      ...f,
+      targetingRules: (f.targetingRules ?? []).map((r: TargetingRule) => ({
+        ...r,
+        id: r.id || crypto.randomUUID(),
+      })),
+    }));
   }
 
   // Try SQL INSERT
