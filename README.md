@@ -14,7 +14,7 @@ A visual editor for creating and managing [OpenFeature](https://openfeature.dev/
 ## Run with Docker
 
 ```sh
-docker run --rm -p 2233:80 viascom/openfeature-editor
+docker run --rm -p 2233:8080 viascom/openfeature-editor
 ```
 
 Then open [http://localhost:2233](http://localhost:2233) in your browser.

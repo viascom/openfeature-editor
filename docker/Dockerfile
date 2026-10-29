@@ -1,8 +1,8 @@
 # Stage 1: Build
-FROM node:lts-alpine AS build
+FROM node:24-alpine AS build
 RUN corepack enable
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
 COPY . .
 ENV NODE_ENV=production
@@ -21,9 +21,9 @@ RUN chown -R appuser:appuser /var/cache/nginx /var/log/nginx /usr/share/nginx/ht
 
 USER appuser
 
-EXPOSE 80
+EXPOSE 8080
 
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-  CMD wget -qO- http://localhost:80/ || exit 1
+  CMD wget -qO- http://127.0.0.1:8080/ || exit 1
 
 CMD ["nginx", "-g", "daemon off;"]
