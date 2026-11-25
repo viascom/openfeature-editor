@@ -9,7 +9,7 @@ ENV NODE_ENV=production
 RUN pnpm build
 
 # Stage 2: Runtime
-FROM nginx:alpine AS runtime
+FROM nginx:1.31.9-alpine AS runtime
 RUN addgroup -g 1001 appuser && adduser -u 1001 -G appuser -s /bin/sh -D appuser
 
 COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
